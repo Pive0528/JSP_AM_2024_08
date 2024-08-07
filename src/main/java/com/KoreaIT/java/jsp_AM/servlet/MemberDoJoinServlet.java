@@ -14,10 +14,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/article/doDelete")
-public class ArticleDeleteServlet extends HttpServlet {
+@WebServlet("/member/doJoin")
+public class MemberDoJoinServlet extends HttpServlet {
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+
 			throws ServletException, IOException {
 		response.setContentType("text/html;charset=UTF-8");
 
@@ -38,18 +39,33 @@ public class ArticleDeleteServlet extends HttpServlet {
 
 		try {
 			conn = DriverManager.getConnection(url, user, password);
-			response.getWriter().append("연결 성공!");
 
-			int id = Integer.parseInt(request.getParameter("id"));
+			String loginId = request.getParameter("loginId");
+			String loginPw = request.getParameter("loginPw");
+			String name = request.getParameter("name");
 
-			SecSql sql = SecSql.from("DELETE");
-			sql.append("FROM article");
-			sql.append("WHERE id = ?", id);
+			SecSql sql = SecSql.from("SELECT COUNT(*) AS cnt");
+			sql.append("FROM `member`");
+			sql.append("WHERE loginId = ?;", loginId);
 
-			DBUtil.delete(conn, sql);
+			boolean isJoinableLoginId = DBUtil.selectRowIntValue(conn, sql) == 0;
 
-			response.getWriter()
-					.append(String.format("<script>alert('%d번 글이 삭제 됨'); location.replace('list');</script>", id));
+			if (isJoinableLoginId == false) {
+				response.getWriter().append(String
+						.format("<script>alert('%s는 이미 사용중'); location.replace('../member/join');</script>", loginId));
+				return;
+			}
+
+			sql = SecSql.from("INSERT INTO `member`");
+			sql.append("SET regDate = NOW(),");
+			sql.append("loginId = ?,", loginId);
+			sql.append("loginPw = ?,", loginPw);
+			sql.append("`name` = ?;", name);
+
+			int id = DBUtil.insert(conn, sql);
+
+			response.getWriter().append(
+					String.format("<script>alert('%d번 회원이 가입 됨'); location.replace('../article/list');</script>", id));
 
 		} catch (SQLException e) {
 			System.out.println("에러 1 : " + e);
@@ -69,5 +85,4 @@ public class ArticleDeleteServlet extends HttpServlet {
 			throws ServletException, IOException {
 		doGet(request, response);
 	}
-
 }
