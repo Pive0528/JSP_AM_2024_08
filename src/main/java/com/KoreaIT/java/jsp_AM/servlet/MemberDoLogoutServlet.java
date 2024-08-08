@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Map;
 
 import com.KoreaIT.java.jsp_AM.util.DBUtil;
 import com.KoreaIT.java.jsp_AM.util.SecSql;
@@ -15,8 +16,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet("/article/doWrite")
-public class ArticleDoWriteServlet extends HttpServlet {
+@WebServlet("/member/doLogout")
+public class MemberDoLogoutServlet extends HttpServlet {
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 
@@ -42,21 +43,12 @@ public class ArticleDoWriteServlet extends HttpServlet {
 			conn = DriverManager.getConnection(url, user, password);
 
 			HttpSession session = request.getSession();
-
-			String title = request.getParameter("title");
-			String body = request.getParameter("body");
-			int loginedMemberId = (int) session.getAttribute("loginedMemberId");
-
-			SecSql sql = SecSql.from("INSERT INTO article");
-			sql.append("SET regDate = NOW(),");
-			sql.append("memberId = ?,", loginedMemberId);
-			sql.append("title = ?,", title);
-			sql.append("`body` = ?;", body);
-
-			int id = DBUtil.insert(conn, sql);
+			session.removeAttribute("loginedMemberId");
+			session.removeAttribute("loginedMemberLoginId");
+			session.removeAttribute("loginedMember");
 
 			response.getWriter()
-					.append(String.format("<script>alert('%d번 글이 등록 됨'); location.replace('list');</script>", id));
+					.append(String.format("<script>alert('로그아웃 됨'); location.replace('../article/list');</script>"));
 
 		} catch (SQLException e) {
 			System.out.println("에러 1 : " + e);
